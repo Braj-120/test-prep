@@ -1,0 +1,45 @@
+console.log('Hello, world!')
+
+global.var_name="value";
+
+function pushToS3(data, callback) {
+  s3.upload(data, (err) => {
+    if (err) {
+      return callback(err);
+    }
+    callback();
+  });
+}
+
+function uploadToS3Helper() {
+  getData((err, data) => {
+    if (err) {
+      return;
+    }
+    if (data) {
+      pushToS3(data, function (err) {
+        if (err) {
+          let id = data.id;
+          updateDBForDataID(id, false, (err) => {
+            if (err) {
+              console.error("Got Error from db for id", id)
+            }
+          });
+          return;
+        };
+        //Success
+        updateDBForDataID(id, true, (err) => {
+          return clearinterval();
+        });
+        
+      });
+    }
+  });
+}
+function uploadToS3() {
+  const pointer = setInterval(uploadToS3Helper, 5000);
+}
+
+function clearinterval() {
+    clearInterval(pointer);
+}
